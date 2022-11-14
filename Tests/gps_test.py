@@ -30,9 +30,9 @@ def convert_to_degrees_decimal(lat, lat_orientation, lon, lon_orientation, alt):
 
   return lat, lon, alt
 
-
+def run_gps():
 # Running main loop
-while True:
+#while True:
   time.sleep(1)  # wait for 1 sec to update GPS value
   line = gps.readline()  # read serial comm line
   splits = str(line).strip("b'").split(',')
