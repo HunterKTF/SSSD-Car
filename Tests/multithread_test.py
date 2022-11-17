@@ -73,18 +73,18 @@ def main():
     # creating threads
     t1 = threading.Thread(target = sensor1)
     t2 = threading.Thread(target=sensor2)
-    t3 = threading.Thread(target=sensor3)
+    #t3 = threading.Thread(target=sensor3)
 
     # start threads
     t1.start()
     t2.start()  
-    t3.start()
+    #t3.start()
 
     print("Active Threads: {}".format(threading.active_count()))
     # wait until threads finish their job
     t1.join()
     t2.join()
-    t3.join()
+    #t3.join()
 
 
 if __name__ == "__main__":
