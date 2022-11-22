@@ -16,10 +16,11 @@ Usage:
 import numpy as np
 import cv2
 import math
+import matplotlib.pyplot as plt
 
 
 
-def input_image(img_name, result):
+def input_image(img_name, result2):
     """
     This function reads the input image and opens it in a new window
     
@@ -32,20 +33,19 @@ def input_image(img_name, result):
     """
 
     #Verify that image exists
-    """try:
+    try:
         # Be advissed that cv2.IMREAD_REDUCED_COLOR_4 reduces the
         # image size by one-fourth
-        img_colour = cv2.imread(img_name)
+        #img_colour = cv2.imread(img_name)
+        
+        ret, frame = img_name.read()
     except:
-        print('ERROR: image', img_name, 'could not be read')
-        exit()"""
-    #size = (640,480)
-    #result = cv2.VideoWriter('color_img.mp4', 
-    #                    cv2.VideoWriter_fourcc(*'MP4V'),
-    #                    30, size)
-    result.write(img_name)
-    cv2.imshow("Colour image", img_name)
-    return img_name
+        print('ERROR')
+        exit()
+    
+    result2.write(frame)
+    cv2.imshow("Colour image", frame)
+    return frame
 
 def greyscale_img(img_colour):
     """
@@ -93,8 +93,9 @@ def canny_img(blur_grey, low_threshold, high_threshold):
     edges: image in black and white with the detected edges in white
 
     """
-
+    
     edges = cv2.Canny(blur_grey, low_threshold, high_threshold, apertureSize=3)
+    
     #cv2.imshow("Canny image", edges)
     return edges
 
@@ -142,12 +143,11 @@ def hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_g
     img_colour_with_lines = img_colour.copy()
     hough_lines = cv2.HoughLinesP(roi_image, rho, theta, threshold, np.array([]),
                                  minLineLength=min_line_len, maxLineGap=max_line_gap)
-    #print(hough_lines)
     for line in hough_lines:
                 for x1, y1, x2, y2 in line:
                     cv2.line(img_colour_with_lines, (x1, y1), (x2, y2), (255,0,0), 5)
     #result.write(img_colour_with_lines)
-    cv2.imshow('Hough lines', img_colour_with_lines)
+    #cv2.imshow('Hough lines', img_colour_with_lines)
     return hough_lines
 
 def left_and_right_lines(hough_lines, img_colour):
@@ -179,17 +179,17 @@ def left_and_right_lines(hough_lines, img_colour):
         for line in hough_lines:
             for x1, y1, x2, y2 in line:
                 slope = (y2 - y1) / (x2 - x1) #slope
-                if math.fabs(slope) < 0.3: #Only consider extreme slope
+                if math.fabs(slope) < 0.2: #Only consider extreme slope
                     continue  
                 
                 if slope <= 0: #Negative slope, left group.
-                    if x1 <= 450 and x2 <= 450: #only consider the left lines in the left side of the image
+                    if x1 <= 400 and x2 <= 400: #only consider the left lines in the left side of the image
                         left_line_x.extend([x1, x2])
                         left_line_y.extend([y1, y2])
                         cv2.line(img_colour_with_left_and_right_lines, (x1, y1), (x2, y2), (0,255,0), 5) #draw left line
                         
                 else: #Otherwise, right group.
-                    if x1 > 450 and x2 > 450: #only consider the right lines in the right side of the image
+                    if x1 > 250 and x2 > 250: #only consider the right lines in the right side of the image
                         right_line_x.extend([x1, x2])
                         right_line_y.extend([y1, y2])
                         cv2.line(img_colour_with_left_and_right_lines, (x1, y1), (x2, y2), (0,0,255), 5) #draw right line
@@ -217,10 +217,11 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
     """
 
     img_lane_lines = img_colour.copy()
-    if len(left_line_x)>0 and len(left_line_y)>0 and len(right_line_x)>0 and len(right_line_y)>0:
+    
+    if len(left_line_x)>0 and len(left_line_y)>0:
     
         #min and max of the line
-        min_y = 240
+        min_y = 250
         max_y = 500
         
         #Create a function that match with all the detected lines
@@ -232,6 +233,30 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
         #get the start and the end
         left_x_start = int(poly_left(max_y))
         left_x_end = int(poly_left(min_y))
+    
+        #save points
+        
+        left_lines=[[
+                [left_x_start, max_y, left_x_end, min_y],
+            ]]  
+        
+        #Add both lines
+        for line in left_lines:
+            for x1, y1, x2, y2 in line:
+                cv2.line(img_lane_lines, (x1, y1), (x2, y2), (255,0,0), 12)
+        
+        #result.write(img_lane_lines)
+        #cv2.imshow('LINES', img_lane_lines)
+
+        #return left_lines
+    else:
+        print("ERROR! No left lane lines detected") 
+        
+    if len(right_line_x)>0 and len(right_line_y)>0:
+    
+        #min and max of the line
+        min_y = 250
+        max_y = 500
         
         #Create a function that match with all the detected lines
         poly_right = np.poly1d(np.polyfit(
@@ -244,24 +269,24 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
         right_x_end = int(poly_right(min_y))
 
         #save points
-        define_lines=[[
-                [left_x_start, max_y, left_x_end, min_y],
+        right_lines=[[
                 [right_x_start, max_y, right_x_end, min_y],
-            ]]   
+            ]]  
         
         #Add both lines
-        for line in define_lines:
+        for line in right_lines:
             for x1, y1, x2, y2 in line:
                 cv2.line(img_lane_lines, (x1, y1), (x2, y2), (255,0,0), 12)
         
-        #size = (640,480)
-        
-        result2.write(img_lane_lines)
-        cv2.imshow('LINES', img_lane_lines)
 
-        return define_lines
+        #return left_lines
     else:
-        print("ERROR! No lane lines detected") 
+        print("ERROR! No right lane lines detected") 
 
-        
-        
+    #define_lines=[[
+    #            [left_lines],
+    #            [right_lines],
+    #        ]] 
+    result2.write(img_lane_lines)
+    cv2.imshow('LINES', img_lane_lines)
+    #return define_lines

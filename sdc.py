@@ -23,13 +23,13 @@ import sdc_library
 def pipeline(img_name, result, result2):
     
     # 1.- Read image
-    img_colour = sdc_library.input_image(img_name, result)
-   
+    img_colour = sdc_library.input_image(img_name)
+
     #2.- Convert from BGR to RGB then from RGB to greyscale
     grey = sdc_library.greyscale_img(img_colour)
 
     # 3.- Apply Gaussian smoothing
-    kernel_size = (9, 9)
+    kernel_size = (11, 11)
     blur_grey = sdc_library.smoothed_img(grey, kernel_size)
     
     # 4-. Apply Canny edge detector
@@ -40,9 +40,8 @@ def pipeline(img_name, result, result2):
     # 5.- Get a region of interest using the just created polygon
     # Define a Region-of-Interest. Change the below vertices according
     # to input image resolution
-    p1, p2, p3, p4 = (3, 438), (3, 200), (600, 200), (600,  438)
-    #p1, p2, p3, p4, p5, p6, p7, p8 = (3, 438), (3, 296), (325, 237), (610, 237), (910, 320), (910, 438),(590,290),(340,290)
-
+    p1, p2, p3, p4 = (3, 438), (3, 200), (630, 200), (630, 438)
+    #p1, p2, p3, p4, p5, p6, p7, p8 = (3, 438), (3, 296), (600, 296), (600, 438), (550, 438), (450, 320), (50, 320), (10, 438)
     # create a vertices array that will be used for the roi
     vertices = np.array([[p1, p2, p3, p4]], dtype=np.int32)
     roi_image = sdc_library.region_of_interest(edges, vertices)
@@ -59,10 +58,27 @@ def pipeline(img_name, result, result2):
     left_line_x, left_line_y, right_line_x, right_line_y = sdc_library.left_and_right_lines(hough_lines, img_colour)
     
     # 8-. Draw a single line for the left and right lane lines
-    defined_lane_lines = sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour, result2)      
+    sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour, result, result2)      
 
-"""if __name__ == "__main__":
+"""   if __name__ == "__main__":
     
+    video = "video3.avi"
+    cap = cv2.VideoCapture(video)
+    size = (640,480)
+    result = cv2.VideoWriter('lane_lines.mp4', 
+                        cv2.VideoWriter_fourcc(*'MP4V'),
+                        20, size)
+    while(cap.isOpened()):
+        pipeline(cap, result)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    # When everything done, release the video capture object
+    cap.release()
+    result.release()
+    # Closes all the frames
+    cv2.destroyAllWindows()
+    
+ 
     # Ask the user to enter the path to input images
     parser = argparse.ArgumentParser()
     parser.add_argument("--path_to_images", help="Path to input images")

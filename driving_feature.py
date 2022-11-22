@@ -9,8 +9,8 @@ from time import sleep
 # Import local libraries
 from pin_map import *
 
-class steering:
-	def __init__(self):
+class Steering:
+    def __init__(self):
 		# Define mapping values for XBox One Controller Trigger
         self.left_max_t = 1
         self.left_min_t = -1.000030518509476
@@ -36,7 +36,7 @@ class steering:
         self.pi_pwm_fr = None		# PWM signal for Front Right motor
         self.pi_pwm_fl = None		# PWM signal for Front Left motor
         
-	def init_sim_params(self):
+    def init_sim_params(self):
 		# Initialize pyagme
         pygame.init()
         
@@ -74,7 +74,7 @@ class steering:
         self.pi_pwm_fr = GPIO.PWM(PWM1_0, 1000)
         self.pi_pwm_fl = GPIO.PWM(PWM1_1, 1000)
         
-	@staticmethod
+    @staticmethod
     def mapping(left_max, left_min, right_max, right_min, value):
         left_span = left_max - left_min
         right_span = right_max - right_min
@@ -82,7 +82,7 @@ class steering:
         return right_min + value_scaled * right_span
     
     # Function to enable forward movement
-	def move_forward(self, value):
+    def move_forward(self, value):
 		# Speed mapping using the trigger input
         self.speed = int(
             self.mapping(self.left_max_t, self.left_min_t,
@@ -174,7 +174,7 @@ class steering:
                 if event.axis == 0:
                     self.steer_vehicle(event.value)
                     
-	def vehicle_input(self):
+    def vehicle_input(self):
         if self.diff_steering == 0:
             self.pi_pwm_rl.start(self.speed)
             self.pi_pwm_rr.start(self.speed)
