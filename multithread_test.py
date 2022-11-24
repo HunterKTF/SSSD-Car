@@ -13,7 +13,7 @@ import cv2
 
 #Import user defined libraries
 import driving_feature as driving
-import camera_test as cameraThread
+import sdc
 import gps_test as gpsThread
 
 
@@ -40,13 +40,13 @@ import gps_test as gpsThread
 #time.sleep(0.5)
 
 #motores
-def sensor1():   
+"""def sensor1():   
     car = driving.Steering()
     car.init_sim_params()
     while True:
         car.check_end_event()
         car.vehicle_input()
-
+"""
 #camara
 def sensor2():
     
@@ -61,8 +61,28 @@ def sensor2():
     result2 = cv2.VideoWriter('lane_lines.avi', 
                          cv2.VideoWriter_fourcc(*'MJPG'),
                          30, size)
+    prev_x1_l = []
+    prev_y1_l=[]
+    prev_x2_l=[]
+    prev_y2_l = []
+    prev_x1_r = []
+    prev_y1_r=[]
+    prev_x2_r=[]
+    prev_y2_r = []
+    prev_x1_hough = []
+    prev_y1_hough = []
+    prev_x2_hough = []
+    prev_y2_hough = []
+    #result.write(frame)
     while True:     
-        cameraThread.video_cap(cap, result, result2)
+        ret, frame = cap.read()
+        sdc.pipeline(frame, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cap.release()
+            result.release()
+            result2.release()
+            cv2.destroyAllWindows()
+        #cameraThread.video_cap(cap, result, result2)
 
 
 #gps
@@ -74,18 +94,18 @@ def sensor3():
 def main():
 
     # creating threads
-    t1 = threading.Thread(target = sensor1)
+    #t1 = threading.Thread(target=sensor1)
     t2 = threading.Thread(target=sensor2)
     t3 = threading.Thread(target=sensor3)
 
     # start threads
-    t1.start()
+    #t1.start()
     t2.start()  
     t3.start()
 
     print("Active Threads: {}".format(threading.active_count()))
     # wait until threads finish their job
-    t1.join()
+    #t1.join()
     t2.join()
     t3.join()
 

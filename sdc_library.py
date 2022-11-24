@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 
 
-def input_image(img_name, result2):
+def input_image(img_name, result):
     """
     This function reads the input image and opens it in a new window
     
@@ -43,7 +43,7 @@ def input_image(img_name, result2):
         print('ERROR')
         exit()
     
-    result2.write(frame)
+    result.write(frame)
     cv2.imshow("Colour image", frame)
     return frame
 
@@ -120,9 +120,65 @@ def region_of_interest(img, vertices):
     cv2.imshow("Canny image within Region of Interest", masked_image)
     return masked_image
 
+def warpImg(img, points, w, h):
+    pts1 = np.float32(points)
+    pts2 = np.float32([[0,0],[w,0],[0,h],[w,h]])
+    matrix = cv2.getPerspectiveTransform(pts1,pts2)
+    imgWarp = cv2.warpPerspective(img, matrix, (w,h))
+    cv2.imshow("Warped img", imgWarp)
+    return imgWarp
+
+def nothing(a):
+    pass
+
+def initializeTrackbars(initialTrackbarVals, wT, hT):
+    cv2.namedWindow("Trackbars")
+    cv2.resizeWindow("Trackbars", 360, 240)
+    cv2.createTrackbar("Width Top", "Trackbars", initialTrackbarVals[0], wT//2, nothing)
+    cv2.createTrackbar("Height Top", "Trackbars", initialTrackbarVals[1], hT, nothing)
+    cv2.createTrackbar("Width Bottom", "Trackbars", initialTrackbarVals[2], wT//2, nothing)
+    cv2.createTrackbar("Height Bottom", "Trackbars", initialTrackbarVals[3], hT, nothing)
+
+def valTrackbars(wT, hT):
+    widthTop = cv2.getTrackbarPos("Width Top", "Trackbars")
+    heightTop = cv2.getTrackbarPos("Height Top", "Trackbars")
+    widthBottom = cv2.getTrackbarPos("Width Bottom", "Trackbars")
+    heightBottom = cv2.getTrackbarPos("Height Bottom", "Trackbars")
+    points = np.float32([(widthTop, heightTop), (wT-widthTop, heightTop),
+                        (widthBottom, heightBottom), (wT-widthBottom, heightBottom)])
+    return points
+
+def drawPoints(img, points):
+    for x in range(4):
+        cv2.circle(img, (int(points[x][0]), int(points[x][1])), 15, (0,0,255), cv2.FILLED)
+
+    cv2.imshow("Points", img)
+    return img
 
 
-def hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_gap):
+
+def getHistogram(img, minValue=0.1, display=False):
+
+    histValues = np.sum(img, axis=0)
+    #print(f"histogram: {histValues}")
+    maxValue = np.max(histValues)
+
+    indexArray = np.where(histValues>=minValue)
+    basePoint = int(np.average(indexArray))
+    #print(f"basepoint: {basePoint}")
+
+    if display:
+        imgHist = np.zeros((img.shape[0], img.shape[1],3), np.uint8)
+        for x, intensity in enumerate(histValues):
+            #print(f"instensity:{intensity}")
+            cv2.line(imgHist, (x, img.shape[0]), (x, img.shape[0]-intensity//255), (255,0,255),1)
+            cv2.circle(imgHist, (basePoint, img.shape[0]), 20, (0,255,255), cv2.FILLED)
+        cv2.imshow("Histogram", imgHist)
+    return basePoint
+
+
+
+def hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_gap, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough):
     """
     This function gets hough lines with the given parameters and the function HoughLinesP
     
@@ -141,14 +197,22 @@ def hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_g
     """
 
     img_colour_with_lines = img_colour.copy()
-    hough_lines = cv2.HoughLinesP(roi_image, rho, theta, threshold, np.array([]),
-                                 minLineLength=min_line_len, maxLineGap=max_line_gap)
-    for line in hough_lines:
-                for x1, y1, x2, y2 in line:
-                    cv2.line(img_colour_with_lines, (x1, y1), (x2, y2), (255,0,0), 5)
+    try:
+        hough_lines = cv2.HoughLinesP(roi_image, rho, theta, threshold, np.array([]),
+                                    minLineLength=min_line_len, maxLineGap=max_line_gap)
+        for line in hough_lines:
+            for x1, y1, x2, y2 in line:
+                prev_x1_hough.append(x1)
+                prev_y1_hough.append(y1)
+                prev_x2_hough.append(x2)
+                prev_y2_hough.append(y2)
+                cv2.line(img_colour_with_lines, (x1, y1), (x2, y2), (255,0,0), 5)
+    except:
+        cv2.line(img_colour_with_lines, (prev_x1_hough[-1], prev_y1_hough[-1]), (prev_x2_hough[-1], prev_y2_hough[-1]), (255,0,0), 5)
+        
     #result.write(img_colour_with_lines)
     #cv2.imshow('Hough lines', img_colour_with_lines)
-    return hough_lines
+    return hough_lines, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough
 
 def left_and_right_lines(hough_lines, img_colour):
     """
@@ -196,10 +260,10 @@ def left_and_right_lines(hough_lines, img_colour):
             
     except:
         print("ERROR! No hough lines detected")
-    cv2.imshow('Left and right lines', img_colour_with_left_and_right_lines)
+    #cv2.imshow('Left and right lines', img_colour_with_left_and_right_lines)
     return left_line_x, left_line_y, right_line_x, right_line_y
     
-def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour, result2):
+def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l):
     """
     This function draws the lane lines
     
@@ -217,12 +281,11 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
     """
 
     img_lane_lines = img_colour.copy()
+    #min and max of the line
+    min_y = 200
+    max_y = 500
     
     if len(left_line_x)>0 and len(left_line_y)>0:
-    
-        #min and max of the line
-        min_y = 250
-        max_y = 500
         
         #Create a function that match with all the detected lines
         poly_left = np.poly1d(np.polyfit(
@@ -243,20 +306,20 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
         #Add both lines
         for line in left_lines:
             for x1, y1, x2, y2 in line:
+                prev_x1_l.append(x1)
+                prev_y1_l.append(y1)
+                prev_x2_l.append(x2)
+                prev_y2_l.append(y2)
                 cv2.line(img_lane_lines, (x1, y1), (x2, y2), (255,0,0), 12)
-        
-        #result.write(img_lane_lines)
-        #cv2.imshow('LINES', img_lane_lines)
+                
 
-        #return left_lines
     else:
-        print("ERROR! No left lane lines detected") 
+        cv2.line(img_lane_lines, (prev_x1_l[-1], prev_y1_l[-1]), (prev_x2_l[-1], prev_y2_l[-1]), (255,0,0), 12)
+        #print("ERROR! No left lane lines detected") 
         
     if len(right_line_x)>0 and len(right_line_y)>0:
     
-        #min and max of the line
-        min_y = 250
-        max_y = 500
+        
         
         #Create a function that match with all the detected lines
         poly_right = np.poly1d(np.polyfit(
@@ -276,17 +339,28 @@ def lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour,
         #Add both lines
         for line in right_lines:
             for x1, y1, x2, y2 in line:
+                prev_x1_r.append(x1)
+                prev_y1_r.append(y1)
+                prev_x2_r.append(x2)
+                prev_y2_r.append(y2)
                 cv2.line(img_lane_lines, (x1, y1), (x2, y2), (255,0,0), 12)
         
 
-        #return left_lines
     else:
-        print("ERROR! No right lane lines detected") 
+        cv2.line(img_lane_lines, (prev_x1_r[-1], prev_y1_r[-1]), (prev_x2_r[-1], prev_y2_r[-1]), (255,0,0), 12)
+        #print("ERROR! No right lane lines detected")
 
-    #define_lines=[[
-    #            [left_lines],
-    #            [right_lines],
-    #        ]] 
+    if len(right_line_x)>0 and len(right_line_y)>0 and len(left_line_x)>0 and len(left_line_y)>0:
+        pts = np.array([[left_x_start, max_y],[right_x_start, max_y], [right_x_end, min_y], [left_x_end, min_y]], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.fillPoly(img_lane_lines, [pts], (255,255,255))
+    else:
+        pts = np.array([[prev_x1_l[-1], prev_y1_l[-1]],[prev_x1_r[-1], prev_y1_r[-1]], 
+                        [prev_x2_r[-1], prev_y2_r[-1]], [prev_x2_l[-1], prev_y2_l[-1]]], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.fillPoly(img_lane_lines, [pts], (255,255,255))
+
+    
     result2.write(img_lane_lines)
     cv2.imshow('LINES', img_lane_lines)
-    #return define_lines
+    return img_lane_lines, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l

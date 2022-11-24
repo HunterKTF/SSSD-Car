@@ -19,18 +19,26 @@ import time
 
 # Import user-defined libraries
 import sdc_library 
+import driving_feature as driving
 
-def pipeline(img_name, result, result2):
+def pipeline(img_name, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough):
     
     # 1.- Read image
-    img_colour = sdc_library.input_image(img_name)
+    img_colour = sdc_library.input_image(img_name, result)
 
     #2.- Convert from BGR to RGB then from RGB to greyscale
     grey = sdc_library.greyscale_img(img_colour)
 
+    h, w, c = img_colour.shape
+    #points = np.float32([(3, 438), (25, 150), (600, 150), (630, 438)])
+    points = sdc_library.valTrackbars(wT=640, hT=480)
+    imgWarp = sdc_library.warpImg(grey, points, w, h)
+    imgCopy = img_colour.copy()
+    imgWarpPoints = sdc_library.drawPoints(imgCopy, points)
+
     # 3.- Apply Gaussian smoothing
     kernel_size = (11, 11)
-    blur_grey = sdc_library.smoothed_img(grey, kernel_size)
+    blur_grey = sdc_library.smoothed_img(imgWarp, kernel_size)
     
     # 4-. Apply Canny edge detector
     low_threshold = 70
@@ -40,7 +48,7 @@ def pipeline(img_name, result, result2):
     # 5.- Get a region of interest using the just created polygon
     # Define a Region-of-Interest. Change the below vertices according
     # to input image resolution
-    p1, p2, p3, p4 = (3, 438), (3, 200), (630, 200), (630, 438)
+    p1, p2, p3, p4 = (3, 438), (25, 150), (600, 150), (630, 438)
     #p1, p2, p3, p4, p5, p6, p7, p8 = (3, 438), (3, 296), (600, 296), (600, 438), (550, 438), (450, 320), (50, 320), (10, 438)
     # create a vertices array that will be used for the roi
     vertices = np.array([[p1, p2, p3, p4]], dtype=np.int32)
@@ -52,13 +60,21 @@ def pipeline(img_name, result, result2):
     threshold = 100                      # minimum number of votes (intersections in Hough grid)
     min_line_len = 10                    # minimum number of pixels making up a line
     max_line_gap = 30                   # maximum gap in pixels between connectable line segments
-    hough_lines = sdc_library.hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_gap)
+    hough_lines, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough = sdc_library.hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_gap, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough)
 
     # 7-. Get the inlier left and right Hough lines
     left_line_x, left_line_y, right_line_x, right_line_y = sdc_library.left_and_right_lines(hough_lines, img_colour)
     
     # 8-. Draw a single line for the left and right lane lines
-    sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, img_colour, result, result2)      
+    img_lane_lines, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l = sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, roi_image, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l) 
+    basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
+    car = driving.Steering()
+    car.init_sim_params()
+    #while True:
+    car.check_end_event(basePoint)
+        #car.vehicle_input()    
+
+    #return basePoint
 
 """   if __name__ == "__main__":
     

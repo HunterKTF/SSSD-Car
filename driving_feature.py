@@ -142,7 +142,7 @@ class Steering:
         print(self.diff_steering)
         
     # Function to check events in pygame via the controller
-    def check_end_event(self):
+    def check_end_event(self, basePoint):
         for event in pygame.event.get():
 			# Event type quit or close tab
             if event.type == QUIT:
@@ -158,9 +158,22 @@ class Steering:
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 0:
-                    print("Pressed A button")
+                    if abs(basePoint-320)<5:
+                        self.move_forward(0.5)
+                    if (basePoint-320)>=5:
+                        self.steer_vehicle(0.5)
+                    if (320-basePoint)>=5:
+                        self.steer_vehicle(-0.5)    
+                    #print("Pressed A button")
+
+            # Event type controller button push
+            if event.type == JOYBUTTONDOWN:
+                if event.button == 1:
+                    pygame.quit()
+                    sys.exit()
+                    
             
-            # Event type axis motion
+            """# Event type axis motion
             if event.type == JOYAXISMOTION:
 				# Left trigger input
                 if event.axis == 5:
@@ -172,7 +185,7 @@ class Steering:
                     
                 # Left joystick horizontal input
                 if event.axis == 0:
-                    self.steer_vehicle(event.value)
+                    self.steer_vehicle(event.value)"""  
                     
     def vehicle_input(self):
         if self.diff_steering == 0:
