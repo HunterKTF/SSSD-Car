@@ -76,17 +76,18 @@ def sensor2():
     prev_y1_hough = []
     prev_x2_hough = []
     prev_y2_hough = []
+    curveList = []
     car = driving.Steering()
     car.init_sim_params()
     #result.write(frame)
     while True:     
         #ret, frame = cap.read()
-        basePoint = sdc.pipeline(cap, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, 
+        curve = sdc.pipeline(cap, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, 
                     prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, 
-                    prev_y1_hough, prev_x2_hough, prev_y2_hough, car)
+                    prev_y1_hough, prev_x2_hough, prev_y2_hough, car, curveList)
 #         print(f"basepoint: {basePoint}")
         car.check_end_event(cap, result, result2)
-        car.vehicle_input(basePoint) 
+        car.vehicle_input(curve) 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cap.release()
             result.release()

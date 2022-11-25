@@ -85,13 +85,13 @@ class Steering:
         return right_min + value_scaled * right_span
     
     # Function to enable forward movement
-    def move_forward(self):
+    def move_forward(self, value):
 		# Speed mapping using the trigger input
-#         self.speed = int(
-#             self.mapping(self.left_max_t, self.left_min_t,
-#                          self.right_max_t, self.right_min_t,
-#                          value))
-#         print("Direct at", self.speed)	# Displays PWM speed
+        self.speed = int(
+            self.mapping(self.left_max_t, self.left_min_t,
+                         self.right_max_t, self.right_min_t,
+                         value))
+        print("Direct at", self.speed)	# Displays PWM speed
         
         # Set config for forward movement [Rear-Left]
         GPIO.output(GPIO_2, GPIO.HIGH)
@@ -144,7 +144,7 @@ class Steering:
             self.mapping(self.left_max_j, self.left_min_j,
                          self.right_max_j, self.right_min_j,
                          value))
-        print(f"diff steer: {diff_steering}")
+        print(f"diff steer: {self.diff_steering}")
         print("Steering")
         print(self.diff_steering)
         
@@ -175,15 +175,13 @@ class Steering:
             if event.type == JOYBUTTONDOWN:
                 if event.button == 1:
 #                     flag = 0
-                    pygame.quit()
-                    sys.exit()
                     cap.release()
                     result.release()
                     result2.release()
                     cv2.destroyAllWindows()
-
-                      
-            
+                    pygame.quit()
+                    sys.exit()
+                    
             # Event type axis motion
             if event.type == JOYAXISMOTION:
 				# Left trigger input
@@ -198,12 +196,22 @@ class Steering:
                 if event.axis == 0:
                     self.steer_vehicle(event.value)  
                     
-    def vehicle_input(self, basePoint):
+    def vehicle_input(self, curve):
 #         print(f"basepoint: {basePoint}")
         if self.flag == 1:
-            self.move_forward()
-            print(f"basepoint: {basePoint}")
-            if abs(basePoint-320)<20:
+            self.move_forward(1)
+            print(f"curve: {curve}")
+            sen = 1.5
+            maxVal = 0.5
+            if curve>maxVal: curve = maxVal
+            if curve<-maxVal: curve = -maxVal
+            if curve>0:
+                sen = 1.7
+                if curve<0.2: curve=0
+            else:
+                if curve>-0.3: curve=0
+            self.steer_vehicle(curve*sen)  
+            """if abs(curve-320)<20:
                 self.diff_steering = 0
                 self.speed=100
                 #print(f"basepoint: {basePoint}")
@@ -218,7 +226,7 @@ class Steering:
             if (320-basePoint)>=20:
                 print("derecha")
                 self.diff_steering = -10
-                self.speed=50
+                self.speed=50"""
                     
         if self.diff_steering == 0:
             print("adelante a", self.speed)

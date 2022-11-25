@@ -21,10 +21,11 @@ import time
 import sdc_library 
 import driving_feature as driving
 
-def pipeline(img_name, result, result2, prev_x1_r, prev_y1_r, prev_x2_r,
-             prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l,
-             prev_y2_l, prev_x1_hough, prev_y1_hough,
-             prev_x2_hough, prev_y2_hough, car):
+def pipeline(img_name, result, result2, prev_x1_r, prev_y1_r,
+            prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l,
+            prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough,
+            prev_y2_hough, curveList):
+
     
     # 1.- Read image
     img_colour = sdc_library.input_image(img_name, result)
@@ -71,9 +72,19 @@ def pipeline(img_name, result, result2, prev_x1_r, prev_y1_r, prev_x2_r,
     
     # 8-. Draw a single line for the left and right lane lines
     img_lane_lines, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l = sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, roi_image, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l) 
-    basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
-    
-    return basePoint
+    midPoint = sdc_library.getHistogram(img_lane_lines, display=True, minPer=0.5, region=4)  
+    curveAvgPoint = sdc_library.getHistogram(img_lane_lines, display=True, minPer=0.9)  
+    curveRaw = curveAvgPoint - midPoint
+    curveList.append(curveRaw)
+    if len(curveList)>10:
+        curveList.pop(0)
+    curve = int(sum(curveList)/len(curveList))
+    curve = curve/100
+    if curve>1: curve == 1
+    if curve<-1: curve == -1
+
+
+    return curve 
 
 """   if __name__ == "__main__":
     
