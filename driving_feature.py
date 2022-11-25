@@ -147,6 +147,7 @@ class Steering:
         
     # Function to check events in pygame via the controller
     def check_end_event(self, basePoint, img_lane_lines):
+        flag =0
         for event in pygame.event.get():
 			# Event type quit or close tab
             if event.type == QUIT:
@@ -175,6 +176,7 @@ class Steering:
                     sys.exit()
 
             if flag == 1:
+                print(basePoint)
                 if abs(basePoint-320)<5:
                     self.move_forward(1)
                     print(f"basepoint: {basePoint}")
@@ -183,10 +185,12 @@ class Steering:
                     self.move_forward(-1)
                 if (basePoint-320)>=5:
                     print("izquierda")
-                    self.steer_vehicle(-1)
+                    self.move_forward(1)
+                    self.steer_vehicle(1)
                 if (320-basePoint)>=5:
                     print("derecha")
-                    self.steer_vehicle(1)          
+                    self.move_forward(1)
+                    self.steer_vehicle(-1)          
             
             """# Event type axis motion
             if event.type == JOYAXISMOTION:
