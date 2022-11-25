@@ -117,7 +117,7 @@ def region_of_interest(img, vertices):
     mask = np.copy(img)*0
     cv2.fillPoly(mask, vertices, 255)
     masked_image = cv2.bitwise_and(img, mask)
-    #cv2.imshow("Canny image within Region of Interest", masked_image)
+#     cv2.imshow("Canny image within Region of Interest", masked_image)
     return masked_image
 
 def warpImg(img, points, w, h):
@@ -213,7 +213,7 @@ def hough(img_colour, roi_image, rho, theta, threshold, min_line_len, max_line_g
 #         print("ERROR")
 #         break
     #result.write(img_colour_with_lines)
-    #cv2.imshow('Hough lines', img_colour_with_lines)
+#     cv2.imshow('Hough lines', img_colour_with_lines)
     return hough_lines, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough
 
 def left_and_right_lines(hough_lines, img_colour):

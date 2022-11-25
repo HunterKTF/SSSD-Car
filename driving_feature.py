@@ -2,6 +2,7 @@
 import RPi.GPIO as GPIO
 import pygame
 import sys
+import cv2
 
 from pygame.locals import *
 from time import sleep
@@ -30,6 +31,7 @@ class Steering:
         # Initialize movement variables
         self.speed = 0
         self.diff_steering = 0
+        self.flag = 0
         
         # Create PWM signals for motors
         self.pi_pwm_rl = None		# PWM signal for Rear Left motor
@@ -83,13 +85,13 @@ class Steering:
         return right_min + value_scaled * right_span
     
     # Function to enable forward movement
-    def move_forward(self, value):
+    def move_forward(self):
 		# Speed mapping using the trigger input
-        self.speed = int(
-            self.mapping(self.left_max_t, self.left_min_t,
-                         self.right_max_t, self.right_min_t,
-                         value))
-        print("Direct at", self.speed)	# Displays PWM speed
+#         self.speed = int(
+#             self.mapping(self.left_max_t, self.left_min_t,
+#                          self.right_max_t, self.right_min_t,
+#                          value))
+#         print("Direct at", self.speed)	# Displays PWM speed
         
         # Set config for forward movement [Rear-Left]
         GPIO.output(GPIO_2, GPIO.HIGH)
@@ -142,12 +144,13 @@ class Steering:
             self.mapping(self.left_max_j, self.left_min_j,
                          self.right_max_j, self.right_min_j,
                          value))
+        print(f"diff steer: {diff_steering}")
         print("Steering")
         print(self.diff_steering)
         
     # Function to check events in pygame via the controller
-    def check_end_event(self, basePoint, img_lane_lines):
-        flag =0
+    def check_end_event(self, cap, result, result2):
+        
         for event in pygame.event.get():
 			# Event type quit or close tab
             if event.type == QUIT:
@@ -163,7 +166,7 @@ class Steering:
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 0:
-                    flag = 1
+                    self.flag = 1
                     #basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
                       
                     #print("Pressed A button")
@@ -171,28 +174,17 @@ class Steering:
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 1:
-                    flag = 0
+#                     flag = 0
                     pygame.quit()
                     sys.exit()
+                    cap.release()
+                    result.release()
+                    result2.release()
+                    cv2.destroyAllWindows()
 
-            if flag == 1:
-                print(basePoint)
-                if abs(basePoint-320)<5:
-                    self.move_forward(1)
-                    print(f"basepoint: {basePoint}")
-                    break
-                else:
-                    self.move_forward(-1)
-                if (basePoint-320)>=5:
-                    print("izquierda")
-                    self.move_forward(1)
-                    self.steer_vehicle(1)
-                if (320-basePoint)>=5:
-                    print("derecha")
-                    self.move_forward(1)
-                    self.steer_vehicle(-1)          
+                      
             
-            """# Event type axis motion
+            # Event type axis motion
             if event.type == JOYAXISMOTION:
 				# Left trigger input
                 if event.axis == 5:
@@ -204,10 +196,32 @@ class Steering:
                     
                 # Left joystick horizontal input
                 if event.axis == 0:
-                    self.steer_vehicle(event.value)"""  
+                    self.steer_vehicle(event.value)  
                     
-    def vehicle_input(self):
+    def vehicle_input(self, basePoint):
+#         print(f"basepoint: {basePoint}")
+        if self.flag == 1:
+            self.move_forward()
+            print(f"basepoint: {basePoint}")
+            if abs(basePoint-320)<20:
+                self.diff_steering = 0
+                self.speed=100
+                #print(f"basepoint: {basePoint}")
+#                 break
+            else:
+                self.diff_steering = 0
+                self.speed=0
+            if (basePoint-320)>=20:
+                print("izquierda")
+                self.diff_steering = 10
+                self.speed=50
+            if (320-basePoint)>=20:
+                print("derecha")
+                self.diff_steering = -10
+                self.speed=50
+                    
         if self.diff_steering == 0:
+            print("adelante a", self.speed)
             self.pi_pwm_rl.start(self.speed)
             self.pi_pwm_rr.start(self.speed)
             self.pi_pwm_fr.start(self.speed)

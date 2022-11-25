@@ -73,11 +73,7 @@ def pipeline(img_name, result, result2, prev_x1_r, prev_y1_r, prev_x2_r,
     img_lane_lines, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l = sdc_library.lane_lines(left_line_x, left_line_y, right_line_x, right_line_y, roi_image, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l) 
     basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
     
-    #while True:
-    car.check_end_event(basePoint, img_lane_lines)
-    car.vehicle_input()    
-
-    #return basePoint
+    return basePoint
 
 """   if __name__ == "__main__":
     

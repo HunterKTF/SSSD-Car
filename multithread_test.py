@@ -81,16 +81,19 @@ def sensor2():
     #result.write(frame)
     while True:     
         #ret, frame = cap.read()
-        sdc.pipeline(cap, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, 
+        basePoint = sdc.pipeline(cap, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, 
                     prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, 
                     prev_y1_hough, prev_x2_hough, prev_y2_hough, car)
+#         print(f"basepoint: {basePoint}")
+        car.check_end_event(cap, result, result2)
+        car.vehicle_input(basePoint) 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cap.release()
             result.release()
             result2.release()
             cv2.destroyAllWindows()
         #cameraThread.video_cap(cap, result, result2)
-
+        
 
 #gps
 def sensor3():
