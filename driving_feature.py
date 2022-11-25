@@ -162,27 +162,31 @@ class Steering:
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 0:
+                    flag = 1
                     #basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
-                    if abs(basePoint-320)<5:
-                        self.move_forward(1)
-                        print(f"basepoint: {basePoint}")
-                        break
-                    else:
-                        self.move_forward(-1)
-                    if (basePoint-320)>=5:
-                        print("izquierda")
-                        self.steer_vehicle(-1)
-                    if (320-basePoint)>=5:
-                        print("derecha")
-                        self.steer_vehicle(1)    
+                      
                     #print("Pressed A button")
 
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 1:
+                    flag = 0
                     pygame.quit()
                     sys.exit()
-                    
+
+            if flag == 1:
+                if abs(basePoint-320)<5:
+                    self.move_forward(1)
+                    print(f"basepoint: {basePoint}")
+                    break
+                else:
+                    self.move_forward(-1)
+                if (basePoint-320)>=5:
+                    print("izquierda")
+                    self.steer_vehicle(-1)
+                if (320-basePoint)>=5:
+                    print("derecha")
+                    self.steer_vehicle(1)          
             
             """# Event type axis motion
             if event.type == JOYAXISMOTION:

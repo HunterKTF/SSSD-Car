@@ -3,11 +3,14 @@
 # Import standard libraries
 import cv2
 import sdc
+import driving_feature as driving
 
 
-def video_cap(cap, result, result2):
+def video_cap(cap, result, result2prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough, car):
+  car = driving.Steering()
+  car.init_sim_params()
   ret, frame = cap.read()
-  sdc.pipeline(frame, result, result2)
+  sdc.pipeline(frame, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough, car)
   #result.write(frame)
   #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   # We need to set resolutions.
