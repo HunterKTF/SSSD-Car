@@ -8,6 +8,7 @@ import signal
 #import busio
 import numpy as np
 import cv2
+import sdc_library
 #from xbox360controller import Xbox360Controller
 
 
@@ -61,6 +62,8 @@ def sensor2():
     result2 = cv2.VideoWriter('lane_lines.avi', 
                          cv2.VideoWriter_fourcc(*'MJPG'),
                          30, size)
+    #intialTrackbarVals = [126,115,0,300]
+    #sdc_library.initializeTrackbars(intialTrackbarVals,wT=640, hT=480)
     prev_x1_l = []
     prev_y1_l=[]
     prev_x2_l=[]
@@ -73,10 +76,14 @@ def sensor2():
     prev_y1_hough = []
     prev_x2_hough = []
     prev_y2_hough = []
+    car = driving.Steering()
+    car.init_sim_params()
     #result.write(frame)
     while True:     
-        ret, frame = cap.read()
-        sdc.pipeline(frame, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, prev_y1_hough, prev_x2_hough, prev_y2_hough)
+        #ret, frame = cap.read()
+        sdc.pipeline(cap, result, result2, prev_x1_r, prev_y1_r, prev_x2_r, 
+                    prev_y2_r, prev_x1_l, prev_y1_l, prev_x2_l, prev_y2_l, prev_x1_hough, 
+                    prev_y1_hough, prev_x2_hough, prev_y2_hough, car)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             cap.release()
             result.release()
@@ -96,18 +103,18 @@ def main():
     # creating threads
     #t1 = threading.Thread(target=sensor1)
     t2 = threading.Thread(target=sensor2)
-    t3 = threading.Thread(target=sensor3)
+    #t3 = threading.Thread(target=sensor3)
 
     # start threads
     #t1.start()
     t2.start()  
-    t3.start()
+    #t3.start()
 
     print("Active Threads: {}".format(threading.active_count()))
     # wait until threads finish their job
     #t1.join()
     t2.join()
-    t3.join()
+    #t3.join()
 
 
 if __name__ == "__main__":

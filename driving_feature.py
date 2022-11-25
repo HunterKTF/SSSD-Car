@@ -8,6 +8,7 @@ from time import sleep
 
 # Import local libraries
 from pin_map import *
+import sdc_library 
 
 class Steering:
     def __init__(self):
@@ -106,6 +107,7 @@ class Steering:
         GPIO.output(GPIO_22, GPIO.LOW)
         GPIO.output(GPIO_23, GPIO.HIGH)
         
+        
     # Function to enable reverse movement
     def move_backward(self, value):
 		# Speed mapping using the trigger input
@@ -131,6 +133,8 @@ class Steering:
         GPIO.output(GPIO_22, GPIO.HIGH)
         GPIO.output(GPIO_23, GPIO.LOW)
         
+        
+        
     # Function to get steering direction
     def steer_vehicle(self, value):
 		# Steering mapping using joystick input
@@ -142,7 +146,7 @@ class Steering:
         print(self.diff_steering)
         
     # Function to check events in pygame via the controller
-    def check_end_event(self, basePoint):
+    def check_end_event(self, basePoint, img_lane_lines):
         for event in pygame.event.get():
 			# Event type quit or close tab
             if event.type == QUIT:
@@ -158,12 +162,19 @@ class Steering:
             # Event type controller button push
             if event.type == JOYBUTTONDOWN:
                 if event.button == 0:
+                    #basePoint = sdc_library.getHistogram(img_lane_lines, display=True)  
                     if abs(basePoint-320)<5:
-                        self.move_forward(0.5)
+                        self.move_forward(1)
+                        print(f"basepoint: {basePoint}")
+                        break
+                    else:
+                        self.move_forward(-1)
                     if (basePoint-320)>=5:
-                        self.steer_vehicle(0.5)
+                        print("izquierda")
+                        self.steer_vehicle(-1)
                     if (320-basePoint)>=5:
-                        self.steer_vehicle(-0.5)    
+                        print("derecha")
+                        self.steer_vehicle(1)    
                     #print("Pressed A button")
 
             # Event type controller button push
@@ -214,9 +225,9 @@ class Steering:
             self.pi_pwm_fr.start(self.speed)
             self.pi_pwm_fl.start(diff_steer)
             
-car = Steering()
-car.init_sim_params()
+# car = Steering()
+# car.init_sim_params()
 
-while True:
-    car.check_end_event()
-    car.vehicle_input()
+# while True:
+#     car.check_end_event(320)
+#     car.vehicle_input()
