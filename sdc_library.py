@@ -157,11 +157,16 @@ def drawPoints(img, points):
 
 
 
-def getHistogram(img, minValue=0.1, display=False):
+def getHistogram(img, minPer=0.1, display=False, region=1):
 
-    histValues = np.sum(img, axis=0)
+    if region == 1:
+
+        histValues = np.sum(img, axis=0)
+    else:
+        histValues = np.sum(img[img.shape[0]//region:,:], axis=0)
     #print(f"histogram: {histValues}")
     maxValue = np.max(histValues)
+    minValue = minPer*maxValue
 
     indexArray = np.where(histValues>=minValue)
     basePoint = int(np.average(indexArray))
@@ -171,7 +176,7 @@ def getHistogram(img, minValue=0.1, display=False):
         imgHist = np.zeros((img.shape[0], img.shape[1],3), np.uint8)
         for x, intensity in enumerate(histValues):
             #print(f"instensity:{intensity}")
-            cv2.line(imgHist, (x, img.shape[0]), (x, img.shape[0]-intensity//255), (255,0,255),1)
+            cv2.line(imgHist, (x, img.shape[0]), (x, img.shape[0]-intensity//255//region), (255,0,255),1)
             cv2.circle(imgHist, (basePoint, img.shape[0]), 20, (0,255,255), cv2.FILLED)
         cv2.imshow("Histogram", imgHist)
     return basePoint
